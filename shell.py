@@ -2,8 +2,8 @@ from cmd import Cmd
 import os
 
 class MyShell(Cmd):
-    prompt = '<Shell> '
-    intro = "Welcome! Type ? to list commands. Type 'exit' to end Shell"
+    prompt = '<' + os.getcwd() + '> '
+    intro = "Welcome! Type ? to list commands. Type 'exit' or 'x' to stop Shell"
 
     def do_prompt(self, line):
         "Change the interactive prompt"
@@ -17,8 +17,13 @@ class MyShell(Cmd):
     def help_exit(self):
         print('exit the Shell. Shorthand: x q command+D.')
 
+    def emptyline(self):
+        "when an empty line is entered, do nothing"
+        # By default when an empty line is entered, the last command is repeated
+        pass
+
     def default(self, inp):
-        if inp == 'x' or inp == 'q':
+        if inp == 'x':
             return self.do_exit(inp)
         print("Default: {}".format(inp))
 
@@ -39,8 +44,30 @@ class MyShell(Cmd):
         # Obviously not robust
         print(line.replace('$out', self.last_output))
 
+    def do_ls(self, input):
+        "show directory"
+        try:
+            if input == '':
+                # sort alphabetically without hidden files
+                files = sorted([f for f in os.listdir() if not f.startswith('.')], key=str.lower)
+                print(*files, sep='\n')  # print list items
+            else:
+                files = sorted([f for f in os.listdir(input) if not f.startswith('.')], key=str.lower)
+                print(*files, sep='\n')
+        except:
+            print('Path not found: {}'.format(input))
+
+    def do_cd(self, path):
+        """convert to absolute path and change directory"""
+        try:
+            os.chdir(os.path.abspath(path))
+            self.do_prompt(os.getcwd())
+            #print(os.getcwd())  # cwd = current working directory
+        except Exception:
+            print("cd: no such file or directory: {}".format(path))
+
 
 if __name__ == '__main__':
-    shell = MyShell()
-    shell.cmdloop()
+    MyShell().cmdloop()
+    #print(os.getcwd())
 
