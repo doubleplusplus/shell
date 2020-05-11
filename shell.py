@@ -6,19 +6,18 @@ import signal
 
 
 class MyShell(Cmd):
-    prompt = ''
-    intro = "Welcome! Type ? to list commands. Type 'exit' or 'x' to stop Shell"
-
     def __init__(self):
         super(MyShell, self).__init__()
         self.prompt = '<' + self.full_to_home_abbr(os.getcwd()) + '> '
+        self.intro = "Welcome! Type ? to list commands. Type 'exit' or 'x' to stop Shell"
+        self.last_output = ''
 
     def do_prompt(self, line):
         "Change the interactive prompt"
         self.prompt = '<' + line + '> '
 
     def do_exit(self, arg):
-        '''exit the Shell. Shorthand: x q.'''
+        '''exit the Shell. Shorthand: x'''
         args = shlex.split(arg)
         if len(args) > 1:
             print('exit: too many arguments', file=sys.stderr)
@@ -27,7 +26,10 @@ class MyShell(Cmd):
         return True
 
     def help_exit(self):
-        print('exit the Shell. Shorthand: x q command+D.')
+        print('exit the Shell. Shorthand: x, command+D.')
+
+    do_EOF = do_exit  # press command+D, send EOF and exit
+    help_EOF = help_exit
 
     def emptyline(self):
         "when an empty line is entered, do nothing"
@@ -43,18 +45,12 @@ class MyShell(Cmd):
         if child_pid == 0:
             try:
                 os.execvp(command[0], command)
-            except:
+            except FileNotFoundError:
                 print(f'No command: {command[0]}')
                 # if error, kill child process
                 os.kill(os.getpid(), signal.SIGKILL)
         else:
             os.waitpid(child_pid, 0)
-
-
-    do_EOF = do_exit  # press command+D, send EOF and exit
-    help_EOF = help_exit
-
-    last_output = ''
 
     def do_shell(self, line):  # ! is shortcut for the shell command
         "Run a shell command"
@@ -71,16 +67,16 @@ class MyShell(Cmd):
 
     def do_ls(self, input):
         "show directory"
-        try:
-            if input == '':
-                # sort alphabetically without hidden files
-                files = sorted([f for f in os.listdir() if not f.startswith('.')], key=str.lower)
-                print(*files, sep='\n')  # print list items
-            else:
+        if input == '':
+            # sort alphabetically without hidden files
+            files = sorted([f for f in os.listdir() if not f.startswith('.')], key=str.lower)
+            print(*files, sep='\n')  # print list items
+        else:
+            try:
                 files = sorted([f for f in os.listdir(input) if not f.startswith('.')], key=str.lower)
                 print(*files, sep='\n')
-        except:
-            print('Path not found: {}'.format(input))
+            except FileNotFoundError:
+                print(f'Path not found: {input}')
 
     def home_abbr_to_full(self, abbr_path: str):
         if abbr_path.startswith('~'):
@@ -99,9 +95,9 @@ class MyShell(Cmd):
             self.do_prompt(f'{self.full_to_home_abbr(os.getcwd())}')
             #print(os.getcwd())  # cwd = current working directory
         except FileNotFoundError:
-            print('cd: not a file: {}'.format(path))
+            print(f'cd: not a file: {path}')
         except NotADirectoryError:
-            print('cd: not a directory {}'.format(path))
+            print(f'cd: not a directory {path}')
 
 
 if __name__ == '__main__':
