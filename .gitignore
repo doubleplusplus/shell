@@ -8,14 +8,17 @@
 .AppleDouble
 .LSOverride
 
+# PyCharm folder
+.idea/
+
+# testing
+test.py
+
 # Icon must end with two \r
 Icon
 
 # Thumbnails
 ._*
-
-# PyCharm folder
-.idea/
 
 # Files that might appear in the root of a volume
 .DocumentRevisions-V100
