@@ -1,5 +1,6 @@
 from cmd import Cmd
 import os
+import sys
 
 class MyShell(Cmd):
     prompt = '<' + os.getcwd() + '> '
@@ -32,9 +33,10 @@ class MyShell(Cmd):
 
     last_output = ''
 
-    def do_shell(self, line):
+    def do_shell(self, line):  # ! is shortcut for the shell command
         "Run a shell command"
         print("running shell command:", line)
+        #os.system(line)
         output = os.popen(line).read()
         print(output)
         self.last_output = output
@@ -68,6 +70,10 @@ class MyShell(Cmd):
 
 
 if __name__ == '__main__':
-    MyShell().cmdloop()
-    #print(os.getcwd())
+    if len(sys.argv) > 1:
+        # accept command line arguments
+        MyShell().onecmd(' '.join(sys.argv[1:]))
+    else:
+        MyShell().cmdloop()
+    #os.system('ls')
 
