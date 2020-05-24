@@ -36,22 +36,6 @@ class MyShell(Cmd):
         # By default when an empty line is entered, the last command is repeated
         pass
 
-    def default(self, inp):
-        if inp == 'x':
-            return self.do_exit(inp)
-        #print("Default: {}".format(inp))
-        command = shlex.split(inp)
-        child_pid = os.fork()
-        if child_pid == 0:
-            try:
-                os.execvp(command[0], command)
-            except FileNotFoundError:
-                print(f'No command: {command[0]}')
-                # if error, kill child process
-                os.kill(os.getpid(), signal.SIGKILL)
-        else:
-            os.waitpid(child_pid, 0)
-
     def do_shell(self, line):  # ! is shortcut for the shell command
         "Run a shell command"
         print("running shell command:", line)
@@ -60,7 +44,7 @@ class MyShell(Cmd):
         print(output)
         self.last_output = output
 
-    def do_echo(self, line):
+    def do_print(self, line):
         "Print the input, replacing '$out' with the output of the last shell command"
         # Obviously not robust
         print(line.replace('$out', self.last_output))
@@ -98,6 +82,75 @@ class MyShell(Cmd):
             print(f'cd: not a file: {path}')
         except NotADirectoryError:
             print(f'cd: not a directory {path}')
+
+    def default(self, inp):
+        # print("Default: {}".format(inp))
+        if inp == 'x':
+            return self.do_exit(inp)
+        command = shlex.split(inp)
+        redirect_symbols = ['<', '>', '>>']
+        intersection = [i for i in redirect_symbols if i in command]
+        if intersection:  # if redirection symbol in input
+            self.redirection(command)
+        elif '|' in command:
+            self.pipeline(command)
+        else:
+            # command = shlex.split(inp)
+            child_pid = os.fork()
+            if child_pid == 0:
+                try:
+                    os.execvp(command[0], command)
+                except FileNotFoundError:
+                    print(f'No command: {command[0]}')
+                    # if error, kill child process
+                    os.kill(os.getpid(), signal.SIGKILL)
+            else:
+                os.waitpid(child_pid, 0)
+
+    def redirection(self, input):
+        print('Redirected')
+        if '<' in input:
+            idx = input.index('<')
+            command = input[:idx]
+            file = input[idx+1]
+            child_pid = os.fork()
+            if child_pid == 0:
+                if file:
+                    fd = os.open(file, os.O_RDONLY, 0o644)
+                    os.dup2(fd, sys.stdin.fileno())
+                os.execvp(command[0], command)
+            else:
+                os.waitpid(child_pid, 0)
+        elif '>' in input:
+            idx = input.index('>')
+            command = input[:idx]
+            file = input[idx + 1]
+            child_pid = os.fork()
+            if child_pid == 0:
+                if file:
+                    # file write only, create if not exist
+                    fd = os.open(file, os.O_WRONLY | os.O_CREAT, 0o644)
+                    # redirection stdout
+                    os.dup2(fd, sys.stdout.fileno())
+                    # os.dup2(fd, sys.stderr.fileno())
+                os.execvp(command[0], command)
+            else:
+                os.waitpid(child_pid, 0)
+        elif '>>' in input:  # append to file
+            idx = input.index('>>')
+            command = input[:idx]
+            file = input[idx + 1]
+            child_pid = os.fork()
+            if child_pid == 0:
+                if file:
+                    fd = os.open(file, os.O_APPEND | os.O_WRONLY | os.O_CREAT, 0o644)
+                    os.dup2(fd, sys.stdout.fileno())
+                os.execvp(command[0], command)
+            else:
+                os.waitpid(child_pid, 0)
+
+    def pipeline(self, input):
+        pass
 
 
 if __name__ == '__main__':
