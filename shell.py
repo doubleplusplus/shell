@@ -150,7 +150,7 @@ class MyShell(Cmd):
     def pipeline(self, input):
         cmd = input.split('|')
         args_list = [i.strip().split() for i in cmd]
-        print(args_list)
+        # print(args_list)
         children_pids = []
         new_fds, old_fds = [], []
 
