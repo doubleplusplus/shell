@@ -4,13 +4,13 @@
 ### macOS ###
 # General
 .DS_Store
-.AppleDouble
-.LSOverride
+
 
 # PyCharm folder
 .idea
 
 # testing
-test.*
+test.py
+*.txt
 
 
