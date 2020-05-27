@@ -13,4 +13,6 @@
 test.py
 *.txt
 
+# C files
+a.out
 
