@@ -10,7 +10,8 @@
 .idea
 
 # testing
-test.*
+test.py
+*.sh
 *.txt
 
 # C files
