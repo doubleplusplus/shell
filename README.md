@@ -1,4 +1,4 @@
-# Shell interpreter interface
+# Shell interpreter
  Customized Shell command line interface written in Python and C
  
  ### Python shell
